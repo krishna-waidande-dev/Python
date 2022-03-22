@@ -3,9 +3,9 @@ from platform import system
 from subprocess import call
 from datetime import datetime
 
-server_names = ["www.google.com", "www.facebook.com", "www.google2.com", "www.google3.com"]
-down_servers_file = r"C:\Users\Desktop\Python-Automation\server_downtime_list.txt"
-available_servers = dict()
+server_names = ["www.google.com", "www.facebook.com", "www.google2.com"]
+down_servers_file = r"C:\Users\91976\Desktop\Python-Automation\server_downtime_list.txt"
+available_servers_dict = dict()
 down_server_file_content_dic = dict()
 
 
@@ -24,7 +24,7 @@ def load_file_in_dict():
 
     with open(down_servers_file, 'r+') as content:
         for line in content:
-            #To eliminate blank lines
+            # To eliminate blank lines
             if not line.isspace():
                 row = line.split(',')
                 server = row[0]
@@ -37,7 +37,7 @@ def check_server_availability():
     for server in server_names:
         if ping_to_server(server):
             if server in down_server_file_content_dic:
-                available_servers[server] = str(datetime.now())
+                available_servers_dict[server] = str(datetime.now())
                 del down_server_file_content_dic[server]
         else:
             if server not in down_server_file_content_dic:
@@ -47,23 +47,25 @@ def check_server_availability():
     if down_server_flag:
         send_mail_for_down_servers(down_server_file_content_dic)
 
-    if available_servers:
-        send_mail_for_up_servers(available_servers)
+    if available_servers_dict:
+        send_mail_for_up_servers(available_servers_dict)
 
 
-def send_mail_for_down_servers(down_server_list):
-    print(down_server_list)
+def send_mail_for_down_servers(down_server_dict):
+    print('Down severs')
+    print(down_server_dict)
 
 
-def send_mail_for_up_servers(up_server_list):
-    print(up_server_list)
+def send_mail_for_up_servers(up_server_dict):
+    print('Up server which was down')
+    print(up_server_dict)
 
 
 def write_dict_to_file():
     with open(down_servers_file, 'w+') as fileWrite:
         for server, timestamp in down_server_file_content_dic.items():
             fileWrite.write(server + ', ' + str(timestamp) + '\n')
-   
+
 
 def main():
     load_file_in_dict()
@@ -72,4 +74,3 @@ def main():
 
 
 main()
-
