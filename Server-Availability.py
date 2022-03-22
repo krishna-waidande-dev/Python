@@ -4,7 +4,7 @@ from subprocess import call
 from datetime import datetime
 
 server_names = ["www.google.com", "www.facebook.com", "www.google2.com"]
-down_servers_file = r"C:\Users\91976\Desktop\Python-Automation\server_downtime_list.txt"
+down_servers_file = r"C:\Users\Desktop\Python-Automation\server_downtime_list.txt"
 available_servers_dict = dict()
 down_server_file_content_dic = dict()
 
