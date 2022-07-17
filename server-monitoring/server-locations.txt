@@ -1,0 +1,5 @@
+place_name,latitude,longitude,server_name
+Pimple Saudagar,18.59,73.79,192.168.40.11
+Wolfsberg,46.84,14.84,192.168.40.12
+Chaina,35.86,104.19,192.168.40.13
+Swizerland,46.8182,8.2275,192.168.40.11
