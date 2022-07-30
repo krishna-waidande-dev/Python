@@ -1,0 +1,92 @@
+import threading
+import concurrent.futures
+import folium
+import pandas
+from platform import system
+from subprocess import call, DEVNULL
+from datetime import datetime
+
+
+worldmap = folium.Map(tiles="OpenStreetMap", width=1100, height=600,
+                          zoom_start=7, zoom_control=True)
+
+fg = folium.FeatureGroup(name="server-locations")
+
+app_type = None
+
+def getServerPingCommand(server):
+    if system().lower() == 'windows':
+        return ['ping', '-n', '2', server]
+    else:
+        return ['ping', '-c', '2', server]
+
+
+def pinpoint(color, latitude, longitude, app, srv_name):
+    print(f"For : {srv_name} color is : {color}")
+    if color == 'red':
+        pop_up_msg = r"<i>" + srv_name + "</i><br> <i> Down At:" + str(datetime.now()) + "</i>"
+    else:
+        pop_up_msg = r"<i>" + srv_name + "</i>"
+
+    return folium.Marker([latitude, longitude], popup=pop_up_msg, tooltip=app,
+                         icon=folium.Icon(color=color))
+
+
+def makeCommand(app_type, server):
+    if app_type == "server":
+        return getServerPingCommand(server)
+
+    if app_type == "db":
+        return ['tnsping', server, "1"]
+
+
+def add_markers(lat, lon, app_name, server, app_type):
+    print("In add marker")
+    cmd = makeCommand(app_type, server)
+    isServerUp = True if call(cmd, stdout=DEVNULL) == 0 else False
+
+    if (isServerUp):
+        fg.add_child(pinpoint('green', lat, lon, app_name, server))
+    else:
+        fg.add_child(pinpoint('red', lat, lon, app_name, server))
+
+
+def load_file_data(filename, entity):
+    data = pandas.read_csv(filename)
+    entities = list(data[entity])   # Entities could either be Servers or DBs
+    appNames = list(data["app_name"])
+    lats = list(data["latitude"])
+    longs = list(data["longitude"])
+    return lats, longs, appNames, entities
+
+
+def draw_map(lats, longs, appName, entity):
+    #This line is added just for debugging purpose.
+    print(threading.current_thread())
+    if app_type == "server":
+        add_markers(lats, longs, appName, entity, app_type)
+
+    if app_type == "db":
+        add_markers(lats, longs, appName, entity, app_type)
+
+def render_map():
+    global app_type
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        app_type = "server"
+        lats, longs, appNames, entities = load_file_data("server-locations.txt", "server_name")
+        executor.map(draw_map, lats, longs, appNames, entities)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor2:
+        app_type = "db"
+        lats, longs, appNames, entities = load_file_data("db-locations.txt", "db_name")
+        executor2.map(draw_map, lats, longs, appNames, entities)
+
+    worldmap.add_child(fg)
+    worldmap.save("C:/Users/acjxqkk/PycharmProjects/Automation-Project/Flask-Demo/templates/latitude-longitute.html")
+
+    executor.shutdown()
+    executor2.shutdown()
+
+
+render_map()
